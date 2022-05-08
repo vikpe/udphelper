@@ -1,2 +1,2 @@
-# udph
-UDP test helpers for Go.
+# UDPH
+> UDP test helpers for Go
