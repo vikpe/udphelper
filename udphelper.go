@@ -1,60 +1,69 @@
 package udphelper
 
 import (
+	"fmt"
 	"net"
 )
 
 type UdpServer struct {
-	Address  string
-	Requests [][]byte
-	conn     net.PacketConn
-	echo     bool
-	response []byte
+	Address   string
+	Requests  [][]byte
+	conn      net.PacketConn
+	echo      bool
+	responses [][]byte
 }
 
-func New(address string) UdpServer {
+func New(address string) *UdpServer {
 	server := UdpServer{
-		Address:  address,
-		Requests: make([][]byte, 0),
-		echo:     false,
+		Address:   address,
+		Requests:  make([][]byte, 0),
+		echo:      false,
+		responses: make([][]byte, 0),
 	}
-	return server
+	return &server
 }
 
-func (s UdpServer) Listen() UdpServer {
-	if s.conn != nil {
-		return s
-	}
-
+func (s *UdpServer) Listen() {
 	s.conn, _ = net.ListenPacket("udp", s.Address)
+	defer s.conn.Close()
 
-	buffer := make([]byte, 1024)
-	messageLength, dst, _ := s.conn.ReadFrom(buffer)
-	message := buffer[:messageLength]
-	s.Requests = append(s.Requests, message)
+	responseCount := len(s.responses)
 
-	if s.echo || s.response != nil {
-		var reply []byte
+	for {
+		responseIndex := len(s.Requests)
+		buffer := make([]byte, 1024)
+		packetLength, dst, _ := s.conn.ReadFrom(buffer)
+		packet := buffer[:packetLength]
 
-		if s.echo {
-			reply = append([]byte("ok:"), message...)
+		fmt.Println("GOT PACKET", packet)
 
-		} else {
-			reply = s.response
+		if s.echo || responseCount > 0 {
+			var reply []byte = nil
+
+			if s.echo {
+				reply = append([]byte("ok:"), packet...)
+			} else {
+				reply = s.responses[responseIndex]
+			}
+
+			s.conn.WriteTo(reply, dst)
 		}
 
-		s.conn.WriteTo(reply, dst)
+		s.Requests = append(s.Requests, packet)
+		isDone := responseCount > 1 && len(s.Requests) == responseCount
+
+		if isDone {
+			break
+		}
 	}
-
-	return s
 }
 
-func (s UdpServer) Echo() UdpServer {
+func (s *UdpServer) Echo() {
 	s.echo = true
-	return s.Listen()
+	s.Listen()
 }
 
-func (s UdpServer) Respond(message []byte) UdpServer {
-	s.response = message
-	return s.Listen()
+func (s *UdpServer) Respond(responses ...[]byte) {
+	s.responses = append(s.responses, responses...)
+	s.Listen()
 }

@@ -10,10 +10,10 @@ import (
 )
 
 func TestUdpServer_Listen(t *testing.T) {
-	var udpServer udphelper.UdpServer
+	udpServer := udphelper.New(":8000")
 
 	go func() {
-		udpServer = udphelper.New(":8000").Listen().Listen()
+		udpServer.Listen()
 	}()
 	time.Sleep(10 * time.Millisecond)
 
@@ -23,10 +23,10 @@ func TestUdpServer_Listen(t *testing.T) {
 }
 
 func TestUdpServer_Echo(t *testing.T) {
-	var udpServer udphelper.UdpServer
+	udpServer := udphelper.New(":8001")
 
 	go func() {
-		udpServer = udphelper.New(":8001").Echo()
+		udpServer.Echo()
 	}()
 	time.Sleep(10 * time.Millisecond)
 
@@ -36,22 +36,42 @@ func TestUdpServer_Echo(t *testing.T) {
 }
 
 func TestUdpServer_Respond(t *testing.T) {
-	var udpServer udphelper.UdpServer
+	t.Run("Single response", func(t *testing.T) {
+		udpServer := udphelper.New(":8002")
 
-	go func() {
-		udpServer = udphelper.New(":8002").Respond([]byte("pong"))
-	}()
-	time.Sleep(10 * time.Millisecond)
+		go func() {
+			udpServer.Respond([]byte("pong"))
+		}()
+		time.Sleep(30 * time.Millisecond)
 
-	response := sendUdpPacket(":8002", []byte("ping"))
-	assert.Equal(t, []byte("ping"), udpServer.Requests[0])
-	assert.Equal(t, []byte("pong"), response)
+		response := sendUdpPacket(":8002", []byte("ping"))
+		assert.Equal(t, []byte("ping"), udpServer.Requests[0])
+		assert.Equal(t, []byte("pong"), response)
+	})
+
+	t.Run("Multiple responses", func(t *testing.T) {
+		udpServer := udphelper.New(":8003")
+
+		go func() {
+			udpServer.Respond([]byte("pong"), []byte("beta"))
+		}()
+		time.Sleep(30 * time.Millisecond)
+
+		response1 := sendUdpPacket(":8003", []byte("ping"))
+		response2 := sendUdpPacket(":8003", []byte("alpha"))
+
+		assert.Equal(t, []byte("ping"), udpServer.Requests[0])
+		assert.Equal(t, []byte("pong"), response1)
+
+		assert.Equal(t, []byte("alpha"), udpServer.Requests[1])
+		assert.Equal(t, []byte("beta"), response2)
+	})
 }
 
 func sendUdpPacket(addr string, packet []byte) []byte {
 	conn, _ := net.Dial("udp4", addr)
 	defer conn.Close()
-	timeoutInMs := 50
+	timeoutInMs := 30
 
 	conn.SetDeadline(getDeadline(timeoutInMs))
 	conn.Write(packet)

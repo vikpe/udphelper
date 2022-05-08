@@ -22,9 +22,17 @@ udphelper.New(":8000").Echo()
 
 ### Respond
 
-Respond to any request with given response.
+Respond to any request with given response(s).
 
+**Single**
 ```go
 response := []byte("pong")
 udphelper.New(":8000").Respond(response)
+```
+
+**Multiple**
+```go
+response1 := []byte("pong1")
+response2 := []byte("pong2")
+udphelper.New(":8000").Respond(response1, response2)
 ```
