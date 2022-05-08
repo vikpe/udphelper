@@ -27,6 +27,7 @@ func (s *UdpServer) Listen() {
 	defer s.conn.Close()
 
 	responseCount := len(s.responses)
+	lastResponseIndex := responseCount - 1
 
 	for {
 		responseIndex := len(s.Requests)
@@ -39,7 +40,9 @@ func (s *UdpServer) Listen() {
 
 			if s.echo {
 				reply = append([]byte("ok:"), packet...)
-			} else {
+			} else if 1 == responseCount {
+				reply = s.responses[0]
+			} else if responseIndex <= lastResponseIndex {
 				reply = s.responses[responseIndex]
 			}
 
