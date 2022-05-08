@@ -35,8 +35,6 @@ func (s *UdpServer) Listen() {
 		packetLength, dst, _ := s.conn.ReadFrom(buffer)
 		packet := buffer[:packetLength]
 
-		fmt.Println("GOT PACKET", packet)
-
 		if s.echo || responseCount > 0 {
 			var reply []byte = nil
 
