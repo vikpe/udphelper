@@ -1,4 +1,4 @@
-module github.com/vikpe/udph
+module github.com/vikpe/udphelper
 
 go 1.18
 
@@ -9,5 +9,3 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c // indirect
 )
-
-replace github.com/vikpe/udph => ../udph
