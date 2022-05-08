@@ -1,7 +1,6 @@
 package udphelper
 
 import (
-	"fmt"
 	"net"
 )
 
