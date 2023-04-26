@@ -2,6 +2,7 @@ package udphelper_test
 
 import (
 	"net"
+	"strings"
 	"testing"
 	"time"
 
@@ -65,6 +66,20 @@ func TestUdpServer_Respond(t *testing.T) {
 
 		assert.Equal(t, []byte("alpha"), udpServer.Requests[1])
 		assert.Equal(t, []byte("beta"), response2)
+	})
+
+	t.Run("Long response", func(t *testing.T) {
+		udpServer := udphelper.New(":8004")
+
+		go func() {
+			udpServer.Echo()
+		}()
+		time.Sleep(10 * time.Millisecond)
+
+		pings := strings.Repeat("x", 2048)
+		response := sendUdpPacket(":8004", []byte(pings))
+		assert.Equal(t, []byte(pings), udpServer.Requests[0])
+		assert.Equal(t, []byte("ok:"+pings), response)
 	})
 }
 

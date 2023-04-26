@@ -31,7 +31,7 @@ func (s *UdpServer) Listen() {
 
 	for {
 		responseIndex := len(s.Requests)
-		buffer := make([]byte, 1024)
+		buffer := make([]byte, 16*1024)
 		packetLength, dst, _ := s.conn.ReadFrom(buffer)
 		packet := buffer[:packetLength]
 
